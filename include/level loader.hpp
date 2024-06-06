@@ -62,6 +62,11 @@ public:
 		screenPos = pos;
 	}
 
+	void setCollision(bool col)
+	{
+		collision = col;
+	}
+
 
 private:
 	Vector2 srcPos{};
@@ -77,6 +82,11 @@ private:
 
 };
 
+
+std::vector<Tile> levelTiles;
+std::vector<int> collisionTileIDs;
+
+
 typedef struct Level
 {
 	Texture2D tileset;
@@ -84,13 +94,96 @@ typedef struct Level
 };
 
 
-Level loadLevel(Texture2D tileset, std::vector<Tile>& tiles)
+Level loadLevel(Texture2D tileset,std::string jsonFile)
 {
-	Level level;
-	level.tileset = tileset;
-	level.tiles = tiles;
+	//initializes json object
+	using json = nlohmann::json;
 
-	return level;
+	std::ifstream jsonFileStream(jsonFile);
+	if (!jsonFileStream.is_open())
+		std::cout << "could not open level data" << std::endl;
+	//beigns parsing json file
+	json jsonData = json::parse(jsonFileStream);
+	//checks for collision tiles Ids and puts them into vector
+	for (auto& tilesets : jsonData["defs"]["tilesets"])
+	{
+		
+		for (auto& enumTags : tilesets["enumTags"])
+		{
+	
+			for (auto& tileID : enumTags["tileIds"])
+			{
+				
+					int id = tileID.get<int>();
+					collisionTileIDs.push_back(id);
+			}
+				
+		}
+	}
+	//initailizes tile objects from json data and puts them into vector
+	for (auto& levels : jsonData["levels"])
+	{
+		for (auto& layerInstances : levels["layerInstances"])
+			for (auto& grid : layerInstances["gridTiles"])
+			{
+				float posX{};
+				float posY{};
+				float srcX{};
+				float srcY{};
+				float id{};
+				bool XorY = true;
+
+				for (auto& pos : grid["px"])
+				{
+					if (XorY)
+					{
+						posX = pos.get<int>();
+						XorY = false;
+					}
+					else
+					{
+						posY = pos.get<int>();
+						XorY = true;
+					}
+
+				}
+				for (auto& pos : grid["src"])
+				{
+					if (XorY)
+					{
+						srcX = pos.get<int>();
+						XorY = false;
+					}
+					else
+					{
+						srcY = pos.get<int>();
+						XorY = true;
+					}
+				}
+				for (auto& pos : grid["t"])
+				{
+					id = pos.get<int>();
+				}
+
+				Tile newTile(Vector2{ srcX,srcY }, Vector2{ posX,posY }, 3, false, id);
+				levelTiles.push_back(newTile);
+
+			}
+
+	}
+	//checks if the tile is a collision tile and sets it to true
+	for (auto& tile : levelTiles)
+	{
+		for (auto& id : collisionTileIDs)
+		{
+			if (tile.getTileID() == id)
+			{
+				tile.setCollision(true);
+			}
+		}
+	}
+
+	return Level{ tileset,levelTiles };
 }
 
 void renderLevel(Level level)
@@ -103,5 +196,4 @@ void renderLevel(Level level)
 }
 
 
-std::vector<Tile> levelTiles;
 

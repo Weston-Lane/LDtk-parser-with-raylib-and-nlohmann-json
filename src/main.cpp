@@ -7,93 +7,46 @@
 #include "json.hpp"
 #include "level loader.hpp"
 
-#define SCREENWIDTH 800
-#define SCREENHEIGHT 540
+#define SCREENWIDTH 1280
+#define SCREENHEIGHT 720
 
 void printTiles(std::vector<Tile>& t);
-
+bool checkCollision(Vector2& sqrPos);
+void pause();
 int main()
 {
-    using json = nlohmann::json;
-
-    std::ifstream jsonFileStream("levels/levelData/test level.json");
-    if (!jsonFileStream.is_open())
-        std::cout << "could not open level data" << std::endl;
-    
-    json jsonData = json::parse(jsonFileStream);
-
-    //std::cout << "test:" << std::setw(2) << jsonData["defs"]["tilesets"] << std::endl;
-    
-
-    for (auto& item : jsonData["levels"])//this is how to get to the data for a tiles pos and src
-    {
-        for (auto& grid : item["layerInstances"])
-            for (auto& data : grid["gridTiles"])
-            {
-                float posX{};
-                float posY{};
-                float srcX{};
-                float srcY{};
-				float id{};
-				bool XorY = true;
-
-                for (auto& pos : data["px"])
-                {
-					if (XorY)
-					{
-						posX = pos.get<int>();
-						XorY = false;
-					}
-					else
-					{
-						posY = pos.get<int>();
-						XorY = true;
-					}
-					
-                }
-                for (auto& pos : data["src"])
-                {
-                    if (XorY)
-                    {
-                        srcX = pos.get<int>();
-                        XorY = false;
-                    }
-                    else
-                    {
-                        srcY = pos.get<int>();
-                        XorY = true;
-                    }
-                }
-                for (auto& pos : data["t"])
-                {
-					id = pos.get<int>();
-                }
-                    
-				Tile newTile(Vector2{ srcX,srcY }, Vector2{ posX,posY }, 2, false, id);
-				levelTiles.push_back(newTile);
-
-            }
-        
-                    
-    }
 
 
-    
     InitWindow(SCREENWIDTH,SCREENHEIGHT, "level tester");
     SetTargetFPS(60);
 
-	Level level=loadLevel(LoadTexture("levels/tileSet/sprites/world_tileset.png"), levelTiles); 
+    Vector2 sqrPos{};
 
+
+    Level level1 = loadLevel(LoadTexture("levels/tileSet/sprites/world_tileset.png"), "levels/levelData/test level2.json");
     while (!WindowShouldClose())
     {
-        // Draw
-        //----------------------------------------------------------------------------------
+		sqrPos = GetMousePosition();
+        sqrPos.x = sqrPos.x - 16;
+        sqrPos.y = sqrPos.y - 16;
+
         BeginDrawing();
         ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 
-        renderLevel(level);
+        renderLevel(level1);
+	
+        if (checkCollision(sqrPos))
+            DrawRectangle(sqrPos.x, sqrPos.y, 16, 16, RED);
+        else
+            DrawRectangle(sqrPos.x, sqrPos.y, 16, 16, GREEN);
 
         EndDrawing();
+
+        if (IsKeyPressed(KEY_P))
+        {
+            pause();
+        }
+
     }
 
     //printTiles(levelTiles);
@@ -103,6 +56,40 @@ int main()
 
 
       
+}
+
+bool checkCollision(Vector2& sqrPos)
+{
+	for (auto tile : levelTiles)
+    {
+        if (tile.getCollision())
+        {
+            if (CheckCollisionRecs(tile.getScreenRec(), { sqrPos.x,sqrPos.y,16,16 }))
+            {
+                return true;
+			}
+		}
+	}
+	return false;  
+}
+
+void pause()
+{
+    while (!WindowShouldClose())
+    {
+
+        BeginDrawing();
+        ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
+
+		DrawText("PAUSED", SCREENWIDTH / 2 - 50, SCREENHEIGHT / 2, 20, RED);
+
+        EndDrawing();
+
+		if (IsKeyPressed(KEY_P))
+        {
+            return;
+		}
+    }
 }
 
 void printTiles(std::vector<Tile>& t)
