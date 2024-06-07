@@ -1,3 +1,33 @@
+/*
+//Dependencies: raylib, nlohmann json
+
+This file is used to load LDtk levels into a game via a json parser. It uses the nlohmann json library to parse the json file and extract the necessary 
+data to create a level.
+
+Uses a Tile class to store the data of each tile, each tile consists of: a source rectangle, a screen rectangle, a scale, a collision bool and a tile ID. which
+are all found in the json file.
+
+Use the loadLevel() function to load a level, it takes a texture2D, a string for the json file path and a bool to initiate paralax scrolling. 
+The function returns a Level struct
+
+The level Struct holds all of the data for the level and is the main object created from this file to be used in other translation units.
+
+Once in the load level function the parser will parse through the tiles with collision and store their IDs in a vector, then it will parse through the level data 
+(getting the src pos, map pos, and tile ID) then creates a tile object for each tile in the map and stores them in a vector.
+The loadLevel() function then checks if the tile collision Vector has any matching IDs with the tile vector, if so, then the collion bool for that tile is set to true.
+
+The Background struct stores the textures for the background and positions for each background.
+	has a paralax scrolling velocity if the level pralax bool is set to true.
+	IMPORTANT: the background textures must be entered manually in the struct or left as empty strings.
+	ALSO: make sure the scale is the same for all textures
+
+The renderLevel() function renders the background and paralax if desired, then renders all the tiles in the level in their respective positions.
+
+IF COLLISION IS DESIRED, USE THE TILE COLLISION BOOL TO CHECK COLLISION IN YOUR OWN COLLISION FUNCTION.
+
+-----CAN CHANGE TILESIZE AND SCALE MACROS IF NEEDED-------
+
+*/
 #pragma once	
 #include "raylib/raylib.h"
 #include "json.hpp"
@@ -5,27 +35,27 @@
 #include <fstream>
 #include <vector>
 
+#ifndef SCALE TILESIZE
+#define SCALE 3.f //scale macro for this translation unit
+#define TILESIZE 16.f
+#endif 
 
-class Tile
+
+
+class Tile//tile class to store tile data
 {
 public:
 	
-	Tile()
-	{
-
-	}
-
-
-	Tile(Vector2 srcPos,Vector2 screenPos, int scale, bool col, int id)
+	Tile(Vector2 srcPos, Vector2 screenPos, int scale, bool col, int id)//tile constructor takes a source position, screen position, scale, collision bool and tile ID
 	{
 		this->srcPos = srcPos;
 		this->screenPos = screenPos;
-		this->scale = scale;
+		this->scale = SCALE;
 		this->collision = col;
 		this->tileID = id;
 
-		this->destRect={ screenPos.x*scale, screenPos.y*scale, 16.f*scale,16.f * scale };
-		this->srcRect = { srcPos.x, srcPos.y, 16, 16 };
+		this->destRect={ screenPos.x*scale, screenPos.y*scale, TILESIZE*scale,TILESIZE * scale };
+		this->srcRect = { srcPos.x, srcPos.y, TILESIZE, TILESIZE	};
 	}
 
 	Rectangle getSrcRec()
@@ -83,18 +113,37 @@ private:
 };
 
 
-std::vector<Tile> levelTiles;
-std::vector<int> collisionTileIDs;
 
+struct background
+{
+	Texture2D bg1 = LoadTexture("levels/backgrounds/nature_5/1.png");//background paths must be entered manually or empty string
+	Texture2D bg2 = LoadTexture("levels/backgrounds/nature_5/2.png");
+	Texture2D bg3 = LoadTexture("levels/backgrounds/nature_5/3.png");
+	Texture2D bg4 = LoadTexture("");
+	Texture2D bg5 = LoadTexture("");
+
+	Vector2 bg1Pos{};
+	Vector2 bg2Pos{};
+	Vector2 bg3Pos{};
+	Vector2 bg4Pos{};
+	Vector2 bg5Pos{};
+	float paralaxVel{};
+};
 
 typedef struct Level
 {
 	Texture2D tileset;
 	std::vector<Tile> tiles;
+	bool paralax = false;
+	background bg;
 };
 
 
-Level loadLevel(Texture2D tileset,std::string jsonFile)
+
+std::vector<Tile> levelTiles;
+std::vector<int> collisionTileIDs;
+
+Level loadLevel(Texture2D tileset,std::string jsonFile, bool paralax)
 {
 	//initializes json object
 	using json = nlohmann::json;
@@ -183,17 +232,69 @@ Level loadLevel(Texture2D tileset,std::string jsonFile)
 		}
 	}
 
-	return Level{ tileset,levelTiles };
+	return Level{ tileset,levelTiles,paralax};
 }
 
-void renderLevel(Level level)
+
+void renderBackground(Level& level)
 {
+	if (level.paralax)
+	{
+		level.bg.bg1Pos.x -= level.bg.paralaxVel * GetFrameTime();
+		level.bg.paralaxVel += 20;
+		level.bg.bg2Pos.x -= level.bg.paralaxVel * GetFrameTime();
+		level.bg.paralaxVel += 20;
+		level.bg.bg3Pos.x -= level.bg.paralaxVel * GetFrameTime();
+		level.bg.paralaxVel += 20;
+		level.bg.bg4Pos.x -= level.bg.paralaxVel * GetFrameTime();
+		level.bg.paralaxVel += 20;
+		level.bg.bg5Pos.x -= level.bg.paralaxVel * GetFrameTime();
+		level.bg.paralaxVel = 0;
+
+		if (level.bg.bg1Pos.x <= -level.bg.bg1.width * 2)
+			level.bg.bg1Pos.x = 0;
+		if (level.bg.bg2Pos.x <= -level.bg.bg2.width * 2)
+			level.bg.bg2Pos.x = 0;
+		if (level.bg.bg3Pos.x <= -level.bg.bg3.width * 2)
+			level.bg.bg3Pos.x = 0;
+		if (level.bg.bg4Pos.x <= -level.bg.bg4.width * 2)
+			level.bg.bg4Pos.x = 0;
+		if (level.bg.bg5Pos.x <= -level.bg.bg5.width * 2)
+			level.bg.bg5Pos.x = 0;
+	}
+		DrawTextureEx(level.bg.bg1, level.bg.bg1Pos, 0.f, SCALE, WHITE);
+		if(level.paralax)
+			DrawTextureEx(level.bg.bg1, { level.bg.bg1Pos.x + level.bg.bg1.width * SCALE }, 0.f, SCALE, WHITE);
+
+		DrawTextureEx(level.bg.bg2, level.bg.bg2Pos, 0.f, SCALE, WHITE);
+		if (level.paralax)
+			DrawTextureEx(level.bg.bg2, { level.bg.bg2Pos.x + level.bg.bg2.width * SCALE }, 0.f, SCALE, WHITE);
+
+		DrawTextureEx(level.bg.bg3, level.bg.bg3Pos, 0.f, SCALE, WHITE);
+		if (level.paralax)
+			DrawTextureEx(level.bg.bg3, { level.bg.bg3Pos.x + level.bg.bg3.width * SCALE }, 0.f, SCALE, WHITE);
+
+		DrawTextureEx(level.bg.bg4, level.bg.bg4Pos, 0.f, SCALE, WHITE);
+		if (level.paralax)
+			DrawTextureEx(level.bg.bg4, { level.bg.bg4Pos.x + level.bg.bg4.width * SCALE }, 0.f, SCALE, WHITE);
+
+		DrawTextureEx(level.bg.bg5, level.bg.bg5Pos, 0.f, SCALE, WHITE);
+		if (level.paralax)
+			DrawTextureEx(level.bg.bg5, { level.bg.bg5Pos.x + level.bg.bg5.width * SCALE }, 0.f, SCALE, WHITE);
+	
+
+}
+
+void renderLevel(Level& level)
+{
+	renderBackground(level);
+
 	for (auto t : level.tiles)
 	{
 		DrawTexturePro(level.tileset, t.getSrcRec(), t.getScreenRec(), Vector2{}, 0.f, WHITE);
-
 	}
 }
+
 
 
 
