@@ -1,53 +1,30 @@
-# 📦 My Package
+# Personal LDtk Level Parser
 
-(add your badges here)
-
-> *Your documentation is a direct reflection of your software, so hold it to the same standards.*
-
-
-## 🌟 Highlights
-
-- Some functionality made easy!
-- This problem handled
-- etc.
-
+## Highlights
+- API takes a json file input from a LDtK level
 
 ## ℹ️ Overview
 
-A paragraph explaining your work, who you are, and why you made it.
+I recently discovered LDtk while looking for a 2D level creation tool. LDtk has many ways of parsing the data from your level but I decided to go the more personal route
+and create my own parser for the json file format since LDtk has some great documentation on it. [RAYLIB](https://github.com/raysan5/raylib/tree/master) AND 
+[NLOHMANN JSON](https://github.com/nlohmann/json) LIBRARIES ARE REQUIRED FOR THIS. Raylib is a fantastic C library for making games and nlohmann json allowed for easy parsing of the data.
+This API uses the loadLevel() function as the work horse and returns a created level object. From there all that is needed is to call the renderLevel() function in the game 
+loop and your level is there! More implementations will be added as I surely will come across more limitations. 
 
+> [!IMPORTANT]
+>  [RAYLIB](https://github.com/raysan5/raylib/tree/master) AND 
+[NLOHMANN JSON](https://github.com/nlohmann/json) LIBRARIES ARE REQUIRED FOR THIS
 
 ### ✍️ Authors
 
-Mention who you are and link to your GitHub or organization's website.
+Weston Lane
 
 
 ## 🚀 Usage
 
-*Show off what your software looks like in action! Try to limit it to one-liners if possible and don't delve into API specifics.*
-
-```py
->>> import mypackage
->>> mypackage.do_stuff()
-'Oh yeah!'
-```
 
 
 ## ⬇️ Installation
 
-Simple, understandable installation instructions!
+Just download the level loader.hpp file from the include directory.
 
-```bash
-pip install my-package
-```
-
-And be sure to specify any other minimum requirements like Python versions or operating systems.
-
-*You may be inclined to add development instructions here, don't.*
-
-
-## 💭 Feedback and Contributing
-
-Add a link to the Discussions tab in your repo and invite users to open issues for bugs/feature requests.
-
-This is also a great place to invite others to contribute in any ways that make sense for your project. Point people to your DEVELOPMENT and/or CONTRIBUTING guides if you have them.
