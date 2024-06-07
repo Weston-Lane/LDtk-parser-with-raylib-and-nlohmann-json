@@ -39,8 +39,9 @@ IF COLLISION IS DESIRED, USE THE TILE COLLISION BOOL TO CHECK COLLISION IN YOUR 
 #define SCALE 3.f //scale macro for this translation unit
 #define TILESIZE 16.f
 #endif 
-
-
+#if 1
+#define BACKGROUNDBREAK "Background_layer"//change 1 to 0 if not wanted or change the string to match layer name//used to break the parsing loop for the background if a solid png is more suitable instead of tiles 
+#endif
 
 class Tile//tile class to store tile data
 {
@@ -114,9 +115,9 @@ private:
 
 struct background
 {
-	Texture2D bg1 = LoadTexture("levels/backgrounds/nature_5/1.png");//background paths must be entered manually or empty string
-	Texture2D bg2 = LoadTexture("levels/backgrounds/nature_5/2.png");
-	Texture2D bg3 = LoadTexture("levels/backgrounds/nature_5/3.png");
+	Texture2D bg1 = LoadTexture("");//background paths must be entered manually or empty string
+	Texture2D bg2 = LoadTexture("");
+	Texture2D bg3 = LoadTexture("");
 	Texture2D bg4 = LoadTexture("");
 	Texture2D bg5 = LoadTexture("");
 
@@ -172,6 +173,9 @@ Level loadLevel(Texture2D tileset, std::string jsonFile, bool paralax)//function
 	for (auto& levels : jsonData["levels"])
 	{
 		for (auto& layerInstances : levels["layerInstances"])
+		{
+			if (layerInstances["__identifier"] == BACKGROUNDBREAK)//continues the loop if the layer is a background layer
+				continue;
 			for (auto& grid : layerInstances["gridTiles"])
 			{
 				float posX{};	//flips between x and y so both values can be stored, since json format is "px":[x,y]
@@ -214,9 +218,11 @@ Level loadLevel(Texture2D tileset, std::string jsonFile, bool paralax)//function
 				}
 
 				Tile newTile(Vector2{ srcX,srcY }, Vector2{ posX,posY }, 3, false, id);//creates new tile object
-				levelTiles.push_back(newTile);//pushes tile into vector
+				levelTiles.insert(levelTiles.begin(),newTile);//pushes tile into vector at the front so front layers will be drawn last on top of back layers
 
 			}
+		}
+
 
 	}
 	//checks if a tile is a collision tile and sets it to true

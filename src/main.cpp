@@ -11,7 +11,7 @@
 #define SCREENHEIGHT 720
 
 void printTiles(std::vector<Tile>& t);
-bool checkCollision(Vector2& sqrPos,Rectangle&);
+bool checkCollision(Vector2& sqrPos);
 void pause();
 
 
@@ -81,7 +81,7 @@ int main()
 
     Vector2 sqrPos{};
 
-    Level level1 = loadLevel(LoadTexture("levels/tileSet/sprites/world_tileset.png"), "levels/levelData/layer testing.json",true);
+    Level level1 = loadLevel(LoadTexture("levels/tileSet/sprites/TilesNonSliced.png"), "levels/levelData/forestTile.json",false);
 
     Camera2D camera = { 0 };
     camera.target = Vector2{ runDest.pos.x+runDest.rec.width/2, runDest.pos.y+runDest.rec.height/2};
@@ -94,17 +94,16 @@ int main()
     {
 		const float DT = GetFrameTime();
 
-		sqrPos = GetMousePosition();
+        sqrPos = GetMousePosition();
         sqrPos.x = sqrPos.x - 16;
         sqrPos.y = sqrPos.y - 16;
-
-        //camera.target = Vector2{ runDest.pos.x + runSrc.rec.width/2, runDest.pos.y + runSrc.rec.height/2};
-		
+        sqrPos.x = (sqrPos.x + camera.target.x) - camera.offset.x;
+		sqrPos.y = (sqrPos.y + camera.target.y) - camera.offset.y;
         camera.target = Vector2{runDest.pos.x*scale+runDest.rec.width/2,runDest.pos.y*scale+runDest.rec.height/2};
         camera.offset = Vector2{ SCREENWIDTH / 2.0f, SCREENHEIGHT / 2.0f };
 
         BeginDrawing();
-        ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
+        ClearBackground(BLACK);
         BeginMode2D(camera);
         
         DrawLine((int)camera.target.x, -SCREENHEIGHT * 10, (int)camera.target.x, SCREENHEIGHT * 10, GREEN);
@@ -112,7 +111,7 @@ int main()
         
         renderLevel(level1);
 		
-        if (checkCollision(sqrPos, runDest.rec))
+        if (checkCollision(sqrPos))
         {
             DrawRectangle(sqrPos.x, sqrPos.y, 16, 16, RED);
 			DrawText("COLLISION", 10, 10, 20, RED);
@@ -143,7 +142,6 @@ int main()
         }
 
 		runSrc=updateAnimData(runSrc, DT, maxFramesIdle);
-        runSrc.rec = { runSrc.rec.x +1,runSrc.rec.y + 16,runSrc.rec.width - 20,runSrc.rec.height - 3 };
 
         runDest.rec = { runDest.pos.x * scale,
                        runDest.pos.y * scale,
@@ -153,8 +151,6 @@ int main()
 
 
 		DrawTexturePro(cyborgRun, runSrc.rec,runDest.rec, Vector2{},0.f, WHITE);
-		
-		runSrc.rec = { runSrc.rec.x - 1,runSrc.rec.y - 16,runSrc.rec.width + 20,runSrc.rec.height + 3 };
        
         EndMode2D();
         
@@ -165,9 +161,11 @@ int main()
             pause();
         }
 
+
     }
 
-    //printTiles(levelTiles);
+	UnloadTexture(cyborgIdle);
+    UnloadTexture(cyborgRun);
     CloseWindow();
     return 0;
 
@@ -191,15 +189,15 @@ AnimData updateAnimData(AnimData data, float deltaTime, int maxFrame)//maxFrame 
 
 }
 
-bool checkCollision(Vector2& sqrPos,Rectangle& player)
+bool checkCollision(Vector2& sqrPos)
 {
 	for (auto tile : levelTiles)
     {
         if (tile.getCollision())
         {
-            if (CheckCollisionRecs(tile.getScreenRec(), { sqrPos.x,sqrPos.y,16,16 })||CheckCollisionRecs(tile.getScreenRec(),player))
+            if (CheckCollisionRecs(tile.getScreenRec(), { sqrPos.x,sqrPos.y,16,16 }))
             {
-                player.y=tile.getScreenPos().y-player.height;
+                
                 return true;
 			}
 		}
