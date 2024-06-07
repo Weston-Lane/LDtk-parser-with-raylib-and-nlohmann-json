@@ -5,10 +5,10 @@ This file is used to load LDtk levels into a game via a json parser. It uses the
 data to create a level.
 
 Uses a Tile class to store the data of each tile, each tile consists of: a source rectangle, a screen rectangle, a scale, a collision bool and a tile ID. which
-are all found in the json file.
+are all found in the json file. can access the tiles vector from wherever
 
-Use the loadLevel() function to load a level, it takes a texture2D, a string for the json file path and a bool to initiate paralax scrolling. 
-The function returns a Level struct
+Use the loadLevel() function to load a level, it takes a texture2D, a string for the json file path, and a bool to initiate paralax scrolling. 
+The function returns a Level struct and is the main function to be called for this API
 
 The level Struct holds all of the data for the level and is the main object created from this file to be used in other translation units.
 
@@ -22,11 +22,11 @@ The Background struct stores the textures for the background and positions for e
 	ALSO: make sure the scale is the same for all textures
 
 The renderLevel() function renders the background and paralax if desired, then renders all the tiles in the level in their respective positions.
+gets call after loading the level.
 
 IF COLLISION IS DESIRED, USE THE TILE COLLISION BOOL TO CHECK COLLISION IN YOUR OWN COLLISION FUNCTION.
 
 -----CAN CHANGE TILESIZE AND SCALE MACROS IF NEEDED-------
-
 */
 #pragma once	
 #include "raylib/raylib.h"
@@ -55,7 +55,7 @@ public:
 		this->tileID = id;
 
 		this->destRect={ screenPos.x*scale, screenPos.y*scale, TILESIZE*scale,TILESIZE * scale };
-		this->srcRect = { srcPos.x, srcPos.y, TILESIZE, TILESIZE	};
+		this->srcRect = { srcPos.x, srcPos.y, TILESIZE, TILESIZE};
 	}
 
 	Rectangle getSrcRec()
@@ -99,17 +99,15 @@ public:
 
 
 private:
-	Vector2 srcPos{};
-	Vector2 screenPos{};
+	Vector2 srcPos{};		//src postion on the tilemap
+	Vector2 screenPos{};	//screen position of the tile
 
 	unsigned int tileID{};
-	float scale{};
-	bool collision{};
+	float scale{};			//scale of the tile
+	bool collision{};		//collision bool
 
-	Rectangle srcRect{};
-	Rectangle destRect{};
-
-
+	Rectangle srcRect{};	//source rectangle for the tile on the tilemap
+	Rectangle destRect{};	//destination rectangle for the tile on the screen
 };
 
 
@@ -132,18 +130,19 @@ struct background
 
 typedef struct Level
 {
-	Texture2D tileset;
-	std::vector<Tile> tiles;
-	bool paralax = false;
-	background bg;
+	Texture2D tileset;//texture for the tileMap
+	std::vector<Tile> tiles;//vector of tiles
+	bool paralax = false;//bool for paralax scrolling
+	background bg;//background instantiation
 };
 
 
-
+/////////////////////////////////////////VECTORS CONTAINERS FOR TILES/////////////////////////////////////////
 std::vector<Tile> levelTiles;
 std::vector<int> collisionTileIDs;
+/////////////////////////////////////////VECTORS CONTAINERS FOR TILES/////////////////////////////////////////
 
-Level loadLevel(Texture2D tileset,std::string jsonFile, bool paralax)
+Level loadLevel(Texture2D tileset, std::string jsonFile, bool paralax)//function to load level from json file, main function call
 {
 	//initializes json object
 	using json = nlohmann::json;
@@ -164,7 +163,7 @@ Level loadLevel(Texture2D tileset,std::string jsonFile, bool paralax)
 			{
 				
 					int id = tileID.get<int>();
-					collisionTileIDs.push_back(id);
+					collisionTileIDs.push_back(id);//pushes tile ID into vector
 			}
 				
 		}
@@ -175,7 +174,7 @@ Level loadLevel(Texture2D tileset,std::string jsonFile, bool paralax)
 		for (auto& layerInstances : levels["layerInstances"])
 			for (auto& grid : layerInstances["gridTiles"])
 			{
-				float posX{};
+				float posX{};	//flips between x and y so both values can be stored, since json format is "px":[x,y]
 				float posY{};
 				float srcX{};
 				float srcY{};
@@ -214,13 +213,13 @@ Level loadLevel(Texture2D tileset,std::string jsonFile, bool paralax)
 					id = pos.get<int>();
 				}
 
-				Tile newTile(Vector2{ srcX,srcY }, Vector2{ posX,posY }, 3, false, id);
-				levelTiles.push_back(newTile);
+				Tile newTile(Vector2{ srcX,srcY }, Vector2{ posX,posY }, 3, false, id);//creates new tile object
+				levelTiles.push_back(newTile);//pushes tile into vector
 
 			}
 
 	}
-	//checks if the tile is a collision tile and sets it to true
+	//checks if a tile is a collision tile and sets it to true
 	for (auto& tile : levelTiles)
 	{
 		for (auto& id : collisionTileIDs)
@@ -232,17 +231,17 @@ Level loadLevel(Texture2D tileset,std::string jsonFile, bool paralax)
 		}
 	}
 
-	return Level{ tileset,levelTiles,paralax};
+	return Level{ tileset,levelTiles,paralax };//returns level object
 }
 
 
 void renderBackground(Level& level)
 {
-	if (level.paralax)
+	if (level.paralax)//if paralax scrolling is true then changes the position of the background textures and increments the paralax velocity by 20 each time
 	{
 		level.bg.bg1Pos.x -= level.bg.paralaxVel * GetFrameTime();
 		level.bg.paralaxVel += 20;
-		level.bg.bg2Pos.x -= level.bg.paralaxVel * GetFrameTime();
+		level.bg.bg2Pos.x -= level.bg.paralaxVel * GetFrameTime();//CHANGE THE AMOUNT OF PARALAX VELOCITY IF DESIRED
 		level.bg.paralaxVel += 20;
 		level.bg.bg3Pos.x -= level.bg.paralaxVel * GetFrameTime();
 		level.bg.paralaxVel += 20;
@@ -251,7 +250,7 @@ void renderBackground(Level& level)
 		level.bg.bg5Pos.x -= level.bg.paralaxVel * GetFrameTime();
 		level.bg.paralaxVel = 0;
 
-		if (level.bg.bg1Pos.x <= -level.bg.bg1.width * 2)
+		if (level.bg.bg1Pos.x <= -level.bg.bg1.width * 2)//if the background textures reach the end of the screen then reset their position
 			level.bg.bg1Pos.x = 0;
 		if (level.bg.bg2Pos.x <= -level.bg.bg2.width * 2)
 			level.bg.bg2Pos.x = 0;
@@ -262,9 +261,9 @@ void renderBackground(Level& level)
 		if (level.bg.bg5Pos.x <= -level.bg.bg5.width * 2)
 			level.bg.bg5Pos.x = 0;
 	}
-		DrawTextureEx(level.bg.bg1, level.bg.bg1Pos, 0.f, SCALE, WHITE);
+	DrawTextureEx(level.bg.bg1, level.bg.bg1Pos, 0.f, SCALE, WHITE);//draws the background textures
 		if(level.paralax)
-			DrawTextureEx(level.bg.bg1, { level.bg.bg1Pos.x + level.bg.bg1.width * SCALE }, 0.f, SCALE, WHITE);
+			DrawTextureEx(level.bg.bg1, { level.bg.bg1Pos.x + level.bg.bg1.width * SCALE }, 0.f, SCALE, WHITE);//if paralax scrolling is true then draw the background texture again but at the end of the last texture
 
 		DrawTextureEx(level.bg.bg2, level.bg.bg2Pos, 0.f, SCALE, WHITE);
 		if (level.paralax)
@@ -285,13 +284,13 @@ void renderBackground(Level& level)
 
 }
 
-void renderLevel(Level& level)
+void renderLevel(Level& level)//call this to render level
 {
-	renderBackground(level);
+	renderBackground(level);//renders the background
 
 	for (auto t : level.tiles)
 	{
-		DrawTexturePro(level.tileset, t.getSrcRec(), t.getScreenRec(), Vector2{}, 0.f, WHITE);
+		DrawTexturePro(level.tileset, t.getSrcRec(), t.getScreenRec(), Vector2{}, 0.f, WHITE);//draws the tiles
 	}
 }
 
