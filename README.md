@@ -2,7 +2,7 @@
 
 ## Highlights
 - API takes a json file input from a LDtK level
-
+- written in C++
 ## ℹ️ Overview
 
 I recently discovered LDtk while looking for a 2D level creation tool. LDtk has many ways of parsing the data from your level but I decided to go the more personal route
@@ -20,11 +20,12 @@ loop and your level is there! More implementations will be added as I surely wil
 Weston Lane
 
 
-## 🚀 Usage
-
+## 🚀 Look
+![LDtk](https://github.com/Weston-Lane/level-loader-json-parser/blob/main/github%20Images/LDtk%20capture.PNG)
+![Loaded Level](https://github.com/Weston-Lane/level-loader-json-parser/blob/main/github%20Images/level%20capture.PNG)
 
 
 ## ⬇️ Installation
 
-Just download the level loader.hpp file from the include directory.
+Just download the level loader.hpp file from main directory or from the include directory. The rest of the files were from me just testing
 
